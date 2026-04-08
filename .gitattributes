@@ -1,0 +1,25 @@
+# Forzar final de línea LF en el repositorio
+* text=auto eol=lf
+
+# Definir tipos de diff para mejor lectura de cambios
+*.blade.php diff=html
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.php diff=php
+
+# Archivos de entorno como texto
+.env text
+.env.* text
+
+# Evitar normalización en archivos binarios
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Ignorar en exportaciones (git archive)
+/.github export-ignore
+CHANGELOG.md export-ignore
+.styleci.yml export-ignore

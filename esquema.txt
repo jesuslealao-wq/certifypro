@@ -1,0 +1,109 @@
+// --- SISTEMA DE GESTIÓN DE CERTIFICADOS ACADÉMICOS ---
+
+// 1. EL CONTENIDO (El "Qué")
+Table Cursos {
+  id integer [primary key, increment]
+  nombre_curso varchar [not null]
+  horas_academicas integer [not null]
+  estado_id integer [ref: > estatus.id, note: 'Filtra por entidad=curso']
+  descripcion text
+  created_at timestamp
+}
+
+Table Modulos {
+  id integer [primary key, increment]
+  curso_id integer [ref: > Cursos.id]
+  titulo_modulo varchar [not null]
+  horas_modulo integer [note: 'Suma de horas de este módulo específico']
+  orden integer [default: 1]
+}
+
+Table Clases {
+  id integer [primary key, increment]
+  modulo_id integer [ref: > Modulos.id]
+  titulo_clase varchar [not null]
+  orden integer [default: 1]
+}
+
+// 2. EL PERSONAL (Instructores y Firmantes)
+Table Autoridades {
+  id integer [primary key, increment]
+  nombre_completo varchar [not null]
+  cargo varchar [not null]
+  especialidad varchar
+  firma_path varchar [note: 'URL de la imagen PNG transparente']
+  sello_path varchar
+  activo boolean [default: true]
+}
+
+// 3. LOS ESTUDIANTES
+Table Alumnos {
+  id integer [primary key, increment]
+  identificacion_nacional varchar [unique, not null]
+  nombre_completo varchar [not null]
+  email varchar
+  telefono varchar
+}
+
+// 4. LA EJECUCIÓN (El "Cuándo y Quién")
+Table Cohortes {
+  id integer [primary key, increment]
+  curso_id integer [ref: > Cursos.id]
+  instructor_id integer [ref: > Autoridades.id, note: 'Instructor específico de esta fecha']
+  fecha_inicio date
+  fecha_fin date
+  codigo_cohorte varchar [note: 'Ej: PHP-2026-Q1']
+  estado_id integer [ref: > estatus.id, note: 'Filtra por entidad=cohorte']
+  
+  modalidad varchar [note: 'presencial, online_vivo, hibrido']
+  // Firmas predeterminadas para toda la cohorte (Inscripción masiva)
+  firma_default_1_id integer [ref: > Autoridades.id]
+  firma_default_2_id integer [ref: > Autoridades.id]
+  firma_default_3_id integer [ref: > Autoridades.id]
+}
+
+// 5. LA CERTIFICACIÓN (El resultado final)
+Table Certificados {
+  id integer [primary key, increment]
+  alumno_id integer [ref: > Alumnos.id]
+  cohorte_id integer [ref: > Cohortes.id]
+  
+  // Datos de Registro Legal
+  libro varchar [not null]
+  folio varchar [not null]
+  codigo_registro_manual varchar [note: 'Código alfanumérico externo']
+  
+  // Seguridad del Sistema
+  codigo_verificacion_app varchar [unique, not null, note: 'Código generado por la App']
+  uuid_seguridad uuid [unique, note: 'Para validación profunda']
+  
+  // Metadatos
+  fecha_emision date [not null]
+  estado_id integer [ref: > estatus .id, note: 'Filtra por entidad=certificado']
+  estado varchar [default: 'valido', note: 'valido / anulado']
+  creado_por_usuario_id integer [note: 'ID del administrativo que emitió el documento']
+  created_at timestamp
+  updated_at timestamp
+  
+  // Firmas finales (se copian de la cohorte al emitir)
+  firma_1_id integer [ref: > Autoridades.id]
+  firma_2_id integer [ref: > Autoridades.id]
+  firma_3_id integer [ref: > Autoridades.id]
+
+  temario_snapshot json [note: 'Guarda copia exacta de Módulos y Clases al momento de emitir']
+  Note: 'Esta tabla congela la foto del curso al momento de aprobar'
+  
+  pdf_path varchar [note: 'Ruta al archivo generado: /storage/certs/2026/CERT-ABC.pdf']
+  qr_path varchar [note: 'Ruta a la imagen del QR generado']
+
+}
+
+Table estatus {
+  id integer [primary key, increment]
+  entidad varchar [not null, note: 'Define a qué tabla pertenece: curso, cohorte, inscripcion, certificado']
+  nombre varchar [not null, note: 'Ej: Publicado, Borrador, Activo']
+  descripcion text [note: 'Explicación para el usuario']
+  orden_visual integer [default: 0]
+  
+  Note: 'Catálogo centralizado de todos los ciclos de vida del sistema'
+}

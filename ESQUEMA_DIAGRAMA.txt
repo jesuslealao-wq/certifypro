@@ -1,0 +1,257 @@
+# Esquema de Base de Datos - Sistema de Certificados
+# Compatible con draw.io / diagrams.net
+# Instrucciones: Copiar este contenido y usar "Arrange > Insert > Advanced > SQL" en draw.io
+
+# ============================================
+# TABLAS PRINCIPALES
+# ============================================
+
+# Tabla: users
+CREATE TABLE users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  email_verified_at TIMESTAMP NULL,
+  password VARCHAR(255) NOT NULL,
+  remember_token VARCHAR(100) NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL
+);
+
+# Tabla: estatus
+CREATE TABLE estatus (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  entidad VARCHAR(50) NOT NULL COMMENT 'curso, cohorte, certificado',
+  nombre VARCHAR(100) NOT NULL,
+  descripcion TEXT NULL,
+  color VARCHAR(20) NULL,
+  orden_visual INT DEFAULT 0,
+  activo BOOLEAN DEFAULT true,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL
+);
+
+# Tabla: autoridades
+CREATE TABLE autoridades (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  nombre_completo VARCHAR(255) NOT NULL,
+  cargo VARCHAR(100) NOT NULL,
+  especialidad VARCHAR(255) NULL,
+  activo BOOLEAN DEFAULT true,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL
+);
+
+# Tabla: cursos
+CREATE TABLE cursos (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  nombre_curso VARCHAR(255) NOT NULL,
+  descripcion TEXT NULL,
+  horas_academicas INT NOT NULL,
+  estado_id BIGINT NOT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL,
+  FOREIGN KEY (estado_id) REFERENCES estatus(id) ON DELETE RESTRICT
+);
+
+# Tabla: modulos
+CREATE TABLE modulos (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  curso_id BIGINT NOT NULL,
+  titulo_modulo VARCHAR(255) NOT NULL,
+  horas_modulo INT NULL,
+  orden INT NOT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL,
+  FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE
+);
+
+# Tabla: clases
+CREATE TABLE clases (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  modulo_id BIGINT NOT NULL,
+  titulo_clase VARCHAR(255) NOT NULL,
+  orden INT NOT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL,
+  FOREIGN KEY (modulo_id) REFERENCES modulos(id) ON DELETE CASCADE
+);
+
+# Tabla: alumnos
+CREATE TABLE alumnos (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  identificacion_nacional VARCHAR(50) UNIQUE NOT NULL,
+  nombre_completo VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NULL,
+  telefono VARCHAR(50) NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL
+);
+
+# Tabla: cohortes
+CREATE TABLE cohortes (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  curso_id BIGINT NOT NULL,
+  codigo_cohorte VARCHAR(100) NULL,
+  modalidad VARCHAR(50) NULL COMMENT 'presencial, virtual, hibrido',
+  fecha_inicio DATE NULL,
+  fecha_fin DATE NULL,
+  instructor_id BIGINT NULL,
+  firma_default_1_id BIGINT NULL,
+  firma_default_2_id BIGINT NULL,
+  firma_default_3_id BIGINT NULL,
+  estado_id BIGINT NOT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL,
+  FOREIGN KEY (curso_id) REFERENCES cursos(id) ON DELETE CASCADE,
+  FOREIGN KEY (instructor_id) REFERENCES autoridades(id) ON DELETE SET NULL,
+  FOREIGN KEY (firma_default_1_id) REFERENCES autoridades(id) ON DELETE SET NULL,
+  FOREIGN KEY (firma_default_2_id) REFERENCES autoridades(id) ON DELETE SET NULL,
+  FOREIGN KEY (firma_default_3_id) REFERENCES autoridades(id) ON DELETE SET NULL,
+  FOREIGN KEY (estado_id) REFERENCES estatus(id) ON DELETE RESTRICT
+);
+
+# Tabla: certificados
+CREATE TABLE certificados (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  alumno_id BIGINT NOT NULL,
+  cohorte_id BIGINT NOT NULL,
+  libro VARCHAR(255) NOT NULL,
+  folio VARCHAR(255) NOT NULL,
+  codigo_registro_manual VARCHAR(255) NULL,
+  codigo_verificacion_app VARCHAR(255) UNIQUE NOT NULL,
+  uuid_seguridad UUID NULL UNIQUE,
+  fecha_emision DATE NOT NULL,
+  estatus_id BIGINT NOT NULL,
+  estado_id BIGINT NULL,
+  estado VARCHAR(50) NULL COMMENT 'valido, revocado, anulado',
+  calificacion_final DECIMAL(5,2) NULL,
+  temario_snapshot TEXT NULL COMMENT 'JSON del temario',
+  pdf_path VARCHAR(500) NULL,
+  qr_path VARCHAR(500) NULL,
+  creado_por_usuario_id BIGINT NULL,
+  firma_1_id BIGINT NULL,
+  firma_2_id BIGINT NULL,
+  firma_3_id BIGINT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL,
+  UNIQUE KEY unique_alumno_cohorte (alumno_id, cohorte_id),
+  FOREIGN KEY (alumno_id) REFERENCES alumnos(id) ON DELETE CASCADE,
+  FOREIGN KEY (cohorte_id) REFERENCES cohortes(id) ON DELETE CASCADE,
+  FOREIGN KEY (estatus_id) REFERENCES estatus(id) ON DELETE RESTRICT,
+  FOREIGN KEY (firma_1_id) REFERENCES autoridades(id) ON DELETE SET NULL,
+  FOREIGN KEY (firma_2_id) REFERENCES autoridades(id) ON DELETE SET NULL,
+  FOREIGN KEY (firma_3_id) REFERENCES autoridades(id) ON DELETE SET NULL
+);
+
+# ============================================
+# TABLAS PIVOTE / RELACIONES
+# ============================================
+
+# Tabla: alumno_cohorte
+CREATE TABLE alumno_cohorte (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  alumno_id BIGINT NOT NULL,
+  cohorte_id BIGINT NOT NULL,
+  fecha_inscripcion DATE NOT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL,
+  UNIQUE KEY unique_alumno_cohorte (alumno_id, cohorte_id),
+  FOREIGN KEY (alumno_id) REFERENCES alumnos(id) ON DELETE CASCADE,
+  FOREIGN KEY (cohorte_id) REFERENCES cohortes(id) ON DELETE CASCADE
+);
+
+# ============================================
+# TABLAS DE CONFIGURACIÓN
+# ============================================
+
+# Tabla: configuraciones
+CREATE TABLE configuraciones (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  clave VARCHAR(255) UNIQUE NOT NULL,
+  valor TEXT NULL,
+  tipo VARCHAR(50) DEFAULT 'string' COMMENT 'string, integer, boolean, json',
+  grupo VARCHAR(100) NULL COMMENT 'general, cursos, certificados',
+  descripcion VARCHAR(500) NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  deleted_at TIMESTAMP NULL
+);
+
+# ============================================
+# RELACIONES PRINCIPALES
+# ============================================
+
+# CURSOS
+# - Un curso tiene muchos módulos (1:N)
+# - Un curso tiene muchas cohortes (1:N)
+# - Un curso pertenece a un estado (N:1)
+
+# MÓDULOS
+# - Un módulo pertenece a un curso (N:1)
+# - Un módulo tiene muchas clases (1:N)
+
+# CLASES
+# - Una clase pertenece a un módulo (N:1)
+
+# COHORTES
+# - Una cohorte pertenece a un curso (N:1)
+# - Una cohorte tiene muchos certificados (1:N)
+# - Una cohorte tiene muchos alumnos (N:M) a través de alumno_cohorte
+# - Una cohorte pertenece a un estado (N:1)
+# - Una cohorte puede tener un instructor (N:1)
+# - Una cohorte puede tener hasta 3 firmas por defecto (N:1 cada una)
+
+# ALUMNOS
+# - Un alumno tiene muchos certificados (1:N)
+# - Un alumno pertenece a muchas cohortes (N:M) a través de alumno_cohorte
+
+# CERTIFICADOS
+# - Un certificado pertenece a un alumno (N:1)
+# - Un certificado pertenece a una cohorte (N:1)
+# - Un certificado pertenece a un estatus (N:1)
+# - Un certificado puede tener hasta 3 firmas (N:1 cada una)
+# - Restricción: Un alumno solo puede tener un certificado por cohorte
+
+# AUTORIDADES
+# - Una autoridad puede ser instructor de muchas cohortes (1:N)
+# - Una autoridad puede firmar muchos certificados (1:N)
+# - Una autoridad puede ser firma por defecto en cohortes (1:N)
+
+# ESTATUS
+# - Un estatus se aplica a múltiples entidades (cursos, cohortes, certificados)
+
+# ============================================
+# NOTAS IMPORTANTES
+# ============================================
+
+# SOFT DELETES:
+# - Todas las tablas principales tienen deleted_at para eliminación lógica
+# - Los registros eliminados no se borran físicamente
+# - Sistema de papelera implementado para recuperación
+
+# CONFIGURACIONES:
+# - Sistema de clave-valor para configuraciones dinámicas
+# - Valores por defecto: estado_default_curso, estado_default_cohorte, 
+#   estado_default_certificado, certificado_estado_valido
+
+# CERTIFICADOS:
+# - Libro: Año de emisión
+# - Folio: Número secuencial con padding (000001, 000002...)
+# - Código verificación: CERT-XXXXXXXX (único)
+# - UUID seguridad: Identificador adicional
+# - Temario snapshot: JSON con módulos y clases al momento de emisión
+
+# GENERACIÓN MASIVA:
+# - Sistema para generar múltiples certificados desde una cohorte
+# - Solo para alumnos inscritos en la cohorte (tabla alumno_cohorte)
+# - Validación de duplicados automática
