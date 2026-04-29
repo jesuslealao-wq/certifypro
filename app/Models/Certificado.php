@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Models\Planilla;
 
 /**
  * Modelo Eloquent para los certificados emitidos a los alumnos.
@@ -77,6 +78,7 @@ class Certificado extends Model
         'pdf_path',
         'qr_path',
         'plantilla_pdf_id',
+        'planilla_id',
     ];
 
     /**
@@ -200,5 +202,10 @@ class Certificado extends Model
     public function plantillaPdf()
     {
         return $this->belongsTo(PlantillaPdf::class);
+    }
+
+    public function planilla()
+    {
+        return $this->belongsTo(Planilla::class);
     }
 }

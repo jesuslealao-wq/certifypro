@@ -7,6 +7,7 @@ use App\Models\Alumno;
 use App\Models\Cohorte;
 use App\Models\Autoridad;
 use App\Models\Estatus;
+use App\Models\Planilla;
 use App\Services\CertificadoPdfService;
 use App\Traits\HasTrash;
 use Illuminate\Http\Request;
@@ -68,8 +69,8 @@ class CertificadoController extends Controller
         $cohortes = Cohorte::with('curso')->get();
         $autoridades = Autoridad::where('activo', true)->get();
         $estados = Estatus::where('entidad', 'certificado')->get();
-        $plantillas = \App\Models\PlantillaPdf::where('activa', true)->get();
-        return view('certificados.create', compact('alumnos', 'cohortes', 'autoridades', 'estados', 'plantillas'));
+        $planillas = Planilla::where('activa', true)->get();
+        return view('certificados.create', compact('alumnos', 'cohortes', 'autoridades', 'estados', 'planillas'));
     }
 
     /**
@@ -103,8 +104,30 @@ class CertificadoController extends Controller
             'firma_1_id' => 'nullable|exists:autoridades,id',
             'firma_2_id' => 'nullable|exists:autoridades,id',
             'firma_3_id' => 'nullable|exists:autoridades,id',
-            'plantilla_pdf_id' => 'nullable|exists:plantillas_pdf,id',
+            'planilla_id' => 'nullable|exists:planillas,id',
         ]);
+
+        // Evitar violación de UNIQUE (alumno_id, cohorte_id).
+        // Si existe en papelera, lo restauramos y actualizamos en lugar de crear uno nuevo.
+        $existente = Certificado::withTrashed()
+            ->where('alumno_id', $validated['alumno_id'])
+            ->where('cohorte_id', $validated['cohorte_id'])
+            ->first();
+
+        if ($existente) {
+            if ($existente->trashed()) {
+                $existente->restore();
+                $existente->update($validated);
+                return redirect()->route('certificados.show', $existente)
+                    ->with('success', 'El certificado ya existía en la papelera. Fue restaurado y actualizado.');
+            }
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'alumno_id' => 'Ya existe un certificado para este alumno en esta cohorte.',
+                ]);
+        }
 
         // Asignar estado por defecto si no se proporciona
         if (empty($validated['estado_id'])) {
@@ -152,8 +175,8 @@ class CertificadoController extends Controller
         $cohortes = Cohorte::with('curso')->get();
         $autoridades = Autoridad::where('activo', true)->get();
         $estados = Estatus::where('entidad', 'certificado')->get();
-        $plantillas = \App\Models\PlantillaPdf::where('activa', true)->get();
-        return view('certificados.edit', compact('certificado', 'alumnos', 'cohortes', 'autoridades', 'estados', 'plantillas'));
+        $planillas = Planilla::where('activa', true)->get();
+        return view('certificados.edit', compact('certificado', 'alumnos', 'cohortes', 'autoridades', 'estados', 'planillas'));
     }
 
     /**
@@ -181,7 +204,7 @@ class CertificadoController extends Controller
             'firma_1_id' => 'nullable|exists:autoridades,id',
             'firma_2_id' => 'nullable|exists:autoridades,id',
             'firma_3_id' => 'nullable|exists:autoridades,id',
-            'plantilla_pdf_id' => 'nullable|exists:plantillas_pdf,id',
+            'planilla_id' => 'nullable|exists:planillas,id',
         ]);
 
         $certificado->update($validated);
@@ -225,7 +248,7 @@ class CertificadoController extends Controller
         $pdf = $service->generarPdf($certificado);
 
         if (!$pdf) {
-            return back()->withErrors(['error' => 'No se encontro una plantilla PDF asignada. Asigna una plantilla a la cohorte o al certificado.']);
+            return back()->withErrors(['error' => 'No se encontró una planilla asignada. Asigna una planilla al certificado o marca una planilla como predeterminada.']);
         }
 
         $nombre = 'certificado_' . ($certificado->codigo_verificacion_app ?? $certificado->id) . '.pdf';
@@ -247,7 +270,7 @@ class CertificadoController extends Controller
         $pdf = $service->generarPdf($certificado);
 
         if (!$pdf) {
-            return back()->withErrors(['error' => 'No se encontro una plantilla PDF asignada.']);
+            return back()->withErrors(['error' => 'No se encontró una planilla asignada.']);
         }
 
         $nombre = 'certificado_' . ($certificado->codigo_verificacion_app ?? $certificado->id) . '.pdf';

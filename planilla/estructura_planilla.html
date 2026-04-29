@@ -1,0 +1,140 @@
+<!-- ==================== PAGINA 1: CERTIFICADO ==================== -->
+<div class="page page-break">
+    <div class="cert-border"></div>
+    <div class="cert-border-inner"></div>
+    <div class="cert-corner cert-corner-tl"></div>
+    <div class="cert-corner cert-corner-tr"></div>
+    <div class="cert-corner cert-corner-bl"></div>
+    <div class="cert-corner cert-corner-br"></div>
+
+    <div class="cert-content">
+        <div class="cert-institution">Instituto de Formacion Profesional</div>
+        <div class="cert-subtitle">Comprometidos con la excelencia academica</div>
+
+        <div class="cert-title">Certificado</div>
+
+        <div class="cert-otorga">Se otorga el presente certificado a:</div>
+
+        <div class="cert-nombre">{{ $alumno_nombre }}</div>
+        <div class="cert-cedula">{{ $alumno_identificacion }}</div>
+
+        <div class="cert-descripcion">
+            Por haber aprobado satisfactoriamente el programa de formacion:
+        </div>
+        <div class="cert-curso">{{ $curso_nombre }}</div>
+        <div class="cert-horas">Duracion: {{ $curso_horas }} horas academicas &bull; Modalidad: {{ $cohorte_modalidad }}</div>
+    </div>
+
+    <div class="cert-footer">
+        <div class="cert-fecha">Emitido el {{ $certificado_fecha_emision }}</div>
+        <div class="cert-firmas">
+            <div class="cert-firma-col">
+                <div class="cert-firma-linea">
+                    <div class="cert-firma-nombre">Firma 1</div>
+                    <div class="cert-firma-cargo">Director Academico</div>
+                </div>
+            </div>
+            <div class="cert-firma-col">
+                <div class="cert-firma-linea">
+                    <div class="cert-firma-nombre">Firma 2</div>
+                    <div class="cert-firma-cargo">Coordinador de Programa</div>
+                </div>
+            </div>
+            <div class="cert-firma-col">
+                <div class="cert-firma-linea">
+                    <div class="cert-firma-nombre">Firma 3</div>
+                    <div class="cert-firma-cargo">Rector</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cert-codigo">Cod: {{ $certificado_codigo }} | Libro: {{ $certificado_libro }} Folio: {{ $certificado_folio }}</div>
+</div>
+
+<!-- ==================== PAGINA 2: REVERSO ==================== -->
+<div class="page">
+    <div class="rev-header">
+        <div class="rev-header-title">Detalle Academico del Certificado</div>
+        <div class="rev-header-sub">Documento complementario al certificado {{ $certificado_codigo }}</div>
+    </div>
+
+    <div class="rev-body">
+        <!-- Datos del participante -->
+        <div class="rev-section">
+            <div class="rev-section-title">Datos del Participante</div>
+            <div class="rev-info-grid">
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Nombre Completo:</div>
+                    <div class="rev-info-value">{{ $alumno_nombre }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Identificacion:</div>
+                    <div class="rev-info-value">{{ $alumno_identificacion }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Correo Electronico:</div>
+                    <div class="rev-info-value">{{ $alumno_email }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos del programa -->
+        <div class="rev-section">
+            <div class="rev-section-title">Datos del Programa</div>
+            <div class="rev-info-grid">
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Programa:</div>
+                    <div class="rev-info-value">{{ $curso_nombre }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Horas Academicas:</div>
+                    <div class="rev-info-value">{{ $curso_horas }} horas</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Modalidad:</div>
+                    <div class="rev-info-value">{{ $cohorte_modalidad }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Cohorte:</div>
+                    <div class="rev-info-value">{{ $cohorte_codigo }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Periodo:</div>
+                    <div class="rev-info-value">{{ $cohorte_fecha_inicio }} al {{ $cohorte_fecha_fin }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Descripcion:</div>
+                    <div class="rev-info-value">{{ $curso_descripcion }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos del certificado -->
+        <div class="rev-section">
+            <div class="rev-section-title">Datos del Certificado</div>
+            <div class="rev-info-grid">
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Fecha de Emision:</div>
+                    <div class="rev-info-value">{{ $certificado_fecha_emision }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Codigo Verificacion:</div>
+                    <div class="rev-info-value">{{ $certificado_codigo }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Registro:</div>
+                    <div class="rev-info-value">Libro {{ $certificado_libro }}, Folio {{ $certificado_folio }}</div>
+                </div>
+                <div class="rev-info-row">
+                    <div class="rev-info-label">Codigo Manual:</div>
+                    <div class="rev-info-value">{{ $certificado_registro }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rev-footer">
+        Este documento es valido con el certificado principal. Verifique su autenticidad con el codigo: {{ $certificado_codigo }}
+    </div>
+</div>

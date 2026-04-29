@@ -26,34 +26,8 @@
         </div>
     </div>
 
-    {{-- Plantilla PDF y Configuracion --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {{-- Plantilla asignada --}}
-        <div class="bg-white rounded-lg shadow p-6">
-            <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                <i data-lucide="file-code" class="w-4 h-4"></i> Plantilla PDF
-            </h4>
-            <form action="{{ route('cohortes.asignar-plantilla', $cohorte) }}" method="POST">
-                @csrf
-                <select name="plantilla_pdf_id" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-3">
-                    <option value="">Sin plantilla</option>
-                    @foreach($plantillas as $p)
-                        <option value="{{ $p->id }}" {{ $cohorte->plantilla_pdf_id == $p->id ? 'selected' : '' }}>{{ $p->nombre }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="w-full bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition">Asignar</button>
-            </form>
-            @if($cohorte->plantillaPdf)
-                <div class="mt-3 text-xs text-slate-500 flex items-center gap-1">
-                    <i data-lucide="check-circle" class="w-3 h-3 text-green-500"></i>
-                    {{ $cohorte->plantillaPdf->nombre }} ({{ ucfirst($cohorte->plantillaPdf->orientacion) }})
-                    <a href="{{ route('plantillas-pdf.edit', $cohorte->plantillaPdf) }}" class="text-blue-600 hover:underline ml-1">Editar</a>
-                </div>
-            @endif
-        </div>
-
-        {{-- Configuracion Masiva --}}
-        <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
+    {{-- Configuracion Masiva --}}
+    <div class="bg-white rounded-lg shadow p-6">
             <h4 class="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
                 <i data-lucide="settings-2" class="w-4 h-4"></i> Configuracion Masiva de Certificados
             </h4>
@@ -148,7 +122,6 @@
             @else
                 <p class="text-sm text-slate-500">Genera certificados primero para poder configurarlos masivamente.</p>
             @endif
-        </div>
     </div>
 
     {{-- Alumnos Inscritos --}}
@@ -464,15 +437,6 @@
                         @endforeach
                     </select>
                 </div>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-slate-700 mb-1">Plantilla PDF (override individual)</label>
-                <select name="plantilla_pdf_id" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                    <option value="">Usar la de la cohorte</option>
-                    @foreach($plantillas as $p)
-                        <option value="{{ $p->id }}" {{ $cert->plantilla_pdf_id == $p->id ? 'selected' : '' }}>{{ $p->nombre }}</option>
-                    @endforeach
-                </select>
             </div>
             <div class="flex gap-3 pt-3 border-t">
                 <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition text-sm">Guardar Cambios</button>

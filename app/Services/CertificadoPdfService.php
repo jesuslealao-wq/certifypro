@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Certificado;
-use App\Models\PlantillaPdf;
+use App\Models\Planilla;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
@@ -38,18 +38,14 @@ class CertificadoPdfService
      * @param  Certificado  $certificado  El certificado para el cual se busca la plantilla.
      * @return PlantillaPdf|null  La plantilla encontrada, o null si no hay ninguna disponible.
      */
-    public function obtenerPlantilla(Certificado $certificado): ?PlantillaPdf
+    public function obtenerPlantilla(Certificado $certificado): ?Planilla
     {
-        // Prioridad: plantilla individual del certificado > plantilla de la cohorte > predeterminada
-        if ($certificado->plantilla_pdf_id) {
-            return PlantillaPdf::find($certificado->plantilla_pdf_id);
+        // Prioridad: planilla individual del certificado > predeterminada activa
+        if ($certificado->planilla_id) {
+            return Planilla::find($certificado->planilla_id);
         }
 
-        if ($certificado->cohorte && $certificado->cohorte->plantilla_pdf_id) {
-            return PlantillaPdf::find($certificado->cohorte->plantilla_pdf_id);
-        }
-
-        return PlantillaPdf::where('es_predeterminada', true)->where('activa', true)->first();
+        return Planilla::where('es_predeterminada', true)->where('activa', true)->first();
     }
 
     /**
@@ -158,10 +154,10 @@ class CertificadoPdfService
      * @param  array         $datos      Array asociativo de variables ya extraidas del certificado.
      * @return string  El HTML completo listo para ser pasado a DomPDF::loadHTML().
      */
-    public function renderizarHtml(PlantillaPdf $plantilla, array $datos): string
+    public function renderizarHtml(Planilla $planilla, array $datos): string
     {
-        $html = $plantilla->contenido_html;
-        $css = $plantilla->estilos_css ?? '';
+        $html = $planilla->estructura_html ?? '';
+        $css = $planilla->estilos_css ?? '';
 
         // Reemplazar variables
         foreach ($datos as $key => $value) {
@@ -174,20 +170,57 @@ class CertificadoPdfService
 
         // Construir fondos CSS por pagina
         $fondoCss = '';
-        if ($plantilla->fondo_pagina_1) {
-            $fondoPath = storage_path('app/public/' . $plantilla->fondo_pagina_1);
-            if (file_exists($fondoPath)) {
+
+        // DomPDF puede fallar con pseudo-selectores (:first-of-type/:nth-of-type).
+        // Aplicamos fondos por estilo inline en las 2 páginas para máxima compatibilidad.
+        $pageBaseStyle = "background-repeat:no-repeat;background-position:center;background-size:cover;background-color:transparent;";
+
+        if ($planilla->fondo_pagina_1) {
+            $fondoPath = $this->resolverRutaFondo($planilla->fondo_pagina_1);
+            if ($fondoPath && file_exists($fondoPath)) {
                 $base64 = base64_encode(file_get_contents($fondoPath));
                 $mime = mime_content_type($fondoPath);
-                $fondoCss .= ".page:first-of-type, .page-break:first-of-type { background-image: url('data:{$mime};base64,{$base64}'); background-size: cover; background-position: center; background-repeat: no-repeat; }\n";
+                $dataUri = "data:{$mime};base64,{$base64}";
+                $html = preg_replace(
+                    '/<div class="page page-break">/i',
+                    '<div class="page page-break" style="background-image:url(\'' . $dataUri . '\');' . $pageBaseStyle . '">',
+                    $html,
+                    1
+                ) ?? $html;
             }
         }
-        if ($plantilla->fondo_pagina_2) {
-            $fondoPath = storage_path('app/public/' . $plantilla->fondo_pagina_2);
-            if (file_exists($fondoPath)) {
+
+        if ($planilla->fondo_pagina_2) {
+            $fondoPath = $this->resolverRutaFondo($planilla->fondo_pagina_2);
+            if ($fondoPath && file_exists($fondoPath)) {
                 $base64 = base64_encode(file_get_contents($fondoPath));
                 $mime = mime_content_type($fondoPath);
-                $fondoCss .= ".page:nth-of-type(2), .page:last-of-type { background-image: url('data:{$mime};base64,{$base64}'); background-size: cover; background-position: center; background-repeat: no-repeat; }\n";
+                $dataUri = "data:{$mime};base64,{$base64}";
+                $html = preg_replace(
+                    '/<div class="page">/i',
+                    '<div class="page" style="background-image:url(\'' . $dataUri . '\');' . $pageBaseStyle . '">',
+                    $html,
+                    1
+                ) ?? $html;
+            }
+        }
+
+        // Fallback CSS (por si el HTML no coincide exactamente con los patrones)
+        $fondoCss .= ".page { background-color: transparent !important; }\n";
+        if ($planilla->fondo_pagina_1) {
+            $fondoPath = $this->resolverRutaFondo($planilla->fondo_pagina_1);
+            if ($fondoPath && file_exists($fondoPath)) {
+                $base64 = base64_encode(file_get_contents($fondoPath));
+                $mime = mime_content_type($fondoPath);
+                $fondoCss .= ".page:first-of-type, .page-break:first-of-type { background-image: url('data:{$mime};base64,{$base64}'); background-size: cover; background-position: center; background-repeat: no-repeat; background-color: transparent; }\n";
+            }
+        }
+        if ($planilla->fondo_pagina_2) {
+            $fondoPath = $this->resolverRutaFondo($planilla->fondo_pagina_2);
+            if ($fondoPath && file_exists($fondoPath)) {
+                $base64 = base64_encode(file_get_contents($fondoPath));
+                $mime = mime_content_type($fondoPath);
+                $fondoCss .= ".page:nth-of-type(2), .page:last-of-type { background-image: url('data:{$mime};base64,{$base64}'); background-size: cover; background-position: center; background-repeat: no-repeat; background-color: transparent; }\n";
             }
         }
 
@@ -199,6 +232,21 @@ class CertificadoPdfService
         $fullHtml .= '</style></head><body>' . $html . '</body></html>';
 
         return $fullHtml;
+    }
+
+    private function resolverRutaFondo(string $filename): ?string
+    {
+        $file = basename(str_replace('\\', '/', $filename));
+        $candidatos = [
+            base_path('planilla' . DIRECTORY_SEPARATOR . $file),
+            public_path('planilla' . DIRECTORY_SEPARATOR . $file),
+        ];
+
+        foreach ($candidatos as $path) {
+            if (is_file($path)) return $path;
+        }
+
+        return null;
     }
 
     /**
@@ -227,8 +275,9 @@ class CertificadoPdfService
         $datos = $this->extraerDatos($certificado);
         $htmlCompleto = $this->renderizarHtml($plantilla, $datos);
 
-        $orientacion = $plantilla->orientacion === 'landscape' ? 'landscape' : 'portrait';
-        $tamano = $plantilla->tamano_papel ?? 'a4';
+        // Planillas usan la estructura base A4 horizontal
+        $orientacion = 'landscape';
+        $tamano = 'a4';
 
         $pdf = Pdf::loadHTML($htmlCompleto)
             ->setPaper($tamano, $orientacion)
@@ -273,7 +322,7 @@ class CertificadoPdfService
             if (!$plantillaRef) $plantillaRef = $plantilla;
 
             $datos = $this->extraerDatos($certificado);
-            $html = $plantilla->contenido_html;
+            $html = $plantilla->estructura_html ?? '';
             $css = $plantilla->estilos_css ?? '';
 
             foreach ($datos as $key => $value) {
@@ -300,16 +349,16 @@ class CertificadoPdfService
         // Fondos para la plantilla de referencia
         $fondoCss = '';
         if ($plantillaRef->fondo_pagina_1) {
-            $fondoPath = storage_path('app/public/' . $plantillaRef->fondo_pagina_1);
-            if (file_exists($fondoPath)) {
+            $fondoPath = $this->resolverRutaFondo($plantillaRef->fondo_pagina_1);
+            if ($fondoPath && file_exists($fondoPath)) {
                 $base64 = base64_encode(file_get_contents($fondoPath));
                 $mime = mime_content_type($fondoPath);
                 $fondoCss .= ".page:first-of-type, .page-break:first-of-type { background-image: url('data:{$mime};base64,{$base64}'); background-size: cover; background-position: center; }\n";
             }
         }
         if ($plantillaRef->fondo_pagina_2) {
-            $fondoPath = storage_path('app/public/' . $plantillaRef->fondo_pagina_2);
-            if (file_exists($fondoPath)) {
+            $fondoPath = $this->resolverRutaFondo($plantillaRef->fondo_pagina_2);
+            if ($fondoPath && file_exists($fondoPath)) {
                 $base64 = base64_encode(file_get_contents($fondoPath));
                 $mime = mime_content_type($fondoPath);
                 $fondoCss .= ".page:nth-of-type(2) { background-image: url('data:{$mime};base64,{$base64}'); background-size: cover; background-position: center; }\n";
@@ -323,8 +372,8 @@ class CertificadoPdfService
         $fullHtml .= $css . "\n" . $fondoCss;
         $fullHtml .= '</style></head><body>' . implode("\n", $htmlPartes) . '</body></html>';
 
-        $orientacion = $plantillaRef->orientacion === 'landscape' ? 'landscape' : 'portrait';
-        $tamano = $plantillaRef->tamano_papel ?? 'a4';
+        $orientacion = 'landscape';
+        $tamano = 'a4';
 
         $pdf = Pdf::loadHTML($fullHtml)
             ->setPaper($tamano, $orientacion)

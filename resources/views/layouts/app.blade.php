@@ -8,10 +8,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
-        
+
         body { font-family: 'Inter', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-        
+
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
@@ -45,74 +45,90 @@
             <h1 class="text-2xl font-bold text-blue-600">CertifyPro</h1>
             <p class="text-xs text-slate-500 mt-1">Sistema de Certificados</p>
         </div>
-        
+
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('dashboard') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="home" class="w-5 h-5"></i>
                 <span class="nav-text">Dashboard</span>
             </a>
-            
+
             <div class="pt-4 pb-2 px-4">
                 <p class="text-xs font-semibold text-slate-400 uppercase">Contenido</p>
             </div>
-            
+
             <a href="{{ route('cursos.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('cursos.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="book-open" class="w-5 h-5"></i>
                 <span class="nav-text">Cursos</span>
             </a>
-            
+
             <a href="{{ route('modulos.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('modulos.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="layers" class="w-5 h-5"></i>
                 <span class="nav-text">Módulos</span>
             </a>
-            
+
             <a href="{{ route('clases.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('clases.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="file-text" class="w-5 h-5"></i>
                 <span class="nav-text">Clases</span>
             </a>
-            
+
             <div class="pt-4 pb-2 px-4">
                 <p class="text-xs font-semibold text-slate-400 uppercase">Personal</p>
             </div>
-            
+
             <a href="{{ route('autoridades.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('autoridades.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="user-check" class="w-5 h-5"></i>
                 <span class="nav-text">Autoridades</span>
             </a>
-            
+
             <a href="{{ route('alumnos.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('alumnos.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="users" class="w-5 h-5"></i>
                 <span class="nav-text">Alumnos</span>
             </a>
-            
+
             <div class="pt-4 pb-2 px-4">
                 <p class="text-xs font-semibold text-slate-400 uppercase">Ejecución</p>
             </div>
-            
+
             <a href="{{ route('cohortes.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('cohortes.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="calendar" class="w-5 h-5"></i>
                 <span class="nav-text">Cohortes</span>
             </a>
-            
+
             <a href="{{ route('certificados.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('certificados.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="award" class="w-5 h-5"></i>
                 <span class="nav-text">Certificados</span>
             </a>
-            
-            <a href="{{ route('plantillas-pdf.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('plantillas-pdf.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
+
+            <a href="{{ route('planillas.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('planillas.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="file-code" class="w-5 h-5"></i>
-                <span class="nav-text">Plantillas PDF</span>
+                <span class="nav-text">Planillas</span>
             </a>
-            
+
             <div class="pt-4 pb-2 px-4">
                 <p class="text-xs font-semibold text-slate-400 uppercase">Configuración</p>
             </div>
-            
+
             <a href="{{ route('estatus.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('estatus.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
                 <i data-lucide="settings" class="w-5 h-5"></i>
                 <span class="nav-text">Estatus</span>
             </a>
+
+            <a href="{{ route('account.edit') }}" class="flex items-center gap-3 px-4 py-3 rounded-lg {{ request()->routeIs('account.*') ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-100' }}">
+                <i data-lucide="user" class="w-5 h-5"></i>
+                <span class="nav-text">Mi Cuenta</span>
+            </a>
         </nav>
+
+        <!-- Logout section -->
+        <div class="p-4 border-t border-slate-200">
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="flex items-center gap-3 px-4 py-3 w-full text-left text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    <span class="nav-text">Cerrar Sesión</span>
+                </button>
+            </form>
+        </div>
     </aside>
 
     <div class="flex-1 flex flex-col min-w-0">
@@ -148,27 +164,13 @@
             if(target) target.classList.remove('hidden');
 
             document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
-                btn.classList.add('text-slate-500', 'hover:bg-slate-50');
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-100');
             });
-            event.currentTarget.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
-            event.currentTarget.classList.remove('text-slate-500', 'hover:bg-slate-50');
-
-            const viewNames = {
-                'dashboard': 'Cursos',
-                'cohorts': 'Cohortes e Instancias',
-                'editor': 'Diseñador de Plantillas',
-                'personnel': 'Gestión de Personal',
-                'verification': 'Portal de Verificación'
-            };
-            document.getElementById('current-view-name').innerText = viewNames[viewId];
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
+            event.target.closest('.nav-item').classList.add('bg-blue-600', 'text-white');
+            event.target.closest('.nav-item').classList.remove('text-slate-600', 'hover:bg-slate-100');
         }
     </script>
-
     @stack('scripts')
 </body>
 </html>

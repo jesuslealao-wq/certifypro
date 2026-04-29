@@ -24,11 +24,18 @@ use App\Http\Controllers\AutoridadController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\CohorteController;
 use App\Http\Controllers\CertificadoController;
+use App\Http\Controllers\PlanillaController;
+use App\Http\Controllers\AccountController;
 
-// -- Pagina principal: Dashboard del sistema --
+// -- Pagina principal: Redireccion condicional --
 Route::get('/', function () {
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+});
+
+// -- Dashboard del sistema (protegido) --
+Route::get('/dashboard', function () {
     return view('dashboard');
-})->name('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 // -- Modulo Estatus: Catalogo de estados reutilizable por entidad (curso, cohorte, certificado) --
 Route::resource('estatus', EstatusController::class);
@@ -77,7 +84,6 @@ Route::post('cohortes/{cohorte}/alumnos/agregar', [CohorteController::class, 'ag
 Route::delete('cohortes/{cohorte}/alumnos/{alumno}', [CohorteController::class, 'removerAlumno'])->name('cohortes.alumnos.remover');
 // Rutas adicionales de cohortes: generacion y configuracion masiva de certificados
 Route::post('cohortes/{cohorte}/generar-certificados-masivo', [CohorteController::class, 'generarCertificadosMasivo'])->name('cohortes.generar-certificados-masivo');
-Route::post('cohortes/{cohorte}/asignar-plantilla', [CohorteController::class, 'asignarPlantilla'])->name('cohortes.asignar-plantilla');
 Route::post('cohortes/{cohorte}/configurar-certificados-masivo', [CohorteController::class, 'configurarCertificadosMasivo'])->name('cohortes.configurar-certificados-masivo');
 Route::put('cohortes/{cohorte}/certificados/{certificado}', [CohorteController::class, 'actualizarCertificadoIndividual'])->name('cohortes.certificados.update');
 // Rutas de generacion de PDF masivo para todos los certificados de una cohorte
@@ -94,14 +100,13 @@ Route::get('certificados/papelera/index', [CertificadoController::class, 'papele
 Route::post('certificados/{id}/restore', [CertificadoController::class, 'restore'])->name('certificados.restore');
 Route::delete('certificados/{id}/force-delete', [CertificadoController::class, 'forceDelete'])->name('certificados.forceDelete');
 
-// -- Modulo Plantillas PDF: Editor visual de plantillas HTML/CSS para certificados --
-// Se excluye la ruta 'show' porque se usa el editor (edit) como vista principal de la plantilla
-Route::resource('plantillas-pdf', \App\Http\Controllers\PlantillaPdfController::class)->except(['show']);
-// Rutas adicionales de plantillas: vista previa, duplicar, subir/eliminar fondos
-Route::get('plantillas-pdf/{plantillas_pdf}/preview', [\App\Http\Controllers\PlantillaPdfController::class, 'preview'])->name('plantillas-pdf.preview');
-Route::post('plantillas-pdf/{plantillas_pdf}/duplicar', [\App\Http\Controllers\PlantillaPdfController::class, 'duplicar'])->name('plantillas-pdf.duplicar');
-Route::post('plantillas-pdf/{plantillas_pdf}/upload-fondo', [\App\Http\Controllers\PlantillaPdfController::class, 'uploadFondo'])->name('plantillas-pdf.upload-fondo');
-Route::post('plantillas-pdf/{plantillas_pdf}/remove-fondo', [\App\Http\Controllers\PlantillaPdfController::class, 'removeFondo'])->name('plantillas-pdf.remove-fondo');
+// -- Modulo Planillas: Gestor de planillas (estructura base + fondos por página) --
+Route::resource('planillas', PlanillaController::class);
+
+// -- Modulo Cuenta: Gestion de la cuenta del usuario autenticado --
+Route::get('account/edit', [AccountController::class, 'edit'])->name('account.edit');
+Route::put('account/update', [AccountController::class, 'updateBasic'])->name('account.update');
+Route::put('account/password', [AccountController::class, 'updatePassword'])->name('account.password.update');
 
 // -- Rutas anidadas: Modulos dentro de cursos y clases dentro de modulos --
 Route::post('cursos/{curso}/modulos', [ModuloController::class, 'store'])->name('cursos.modulos.store');
@@ -113,10 +118,12 @@ Route::prefix('api')->group(function () {
     // Route::get('/cursos', [CursoApiController::class, 'index']);
     // Route::post('/cursos', [CursoApiController::class, 'store']);
     // Route::get('/estatus/curso', [CursoApiController::class, 'estatusCurso']);
-    
+
     // API para gestión inline de módulos y clases
     Route::post('/cursos/{curso}/modulos', [ModuloController::class, 'storeApi']);
     Route::delete('/modulos/{modulo}', [ModuloController::class, 'destroyApi']);
     Route::post('/modulos/{modulo}/clases', [ClaseController::class, 'storeApi']);
     Route::delete('/clases/{clase}', [ClaseController::class, 'destroyApi']);
 });
+
+require __DIR__.'/auth.php';

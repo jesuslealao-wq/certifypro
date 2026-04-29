@@ -130,17 +130,17 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-slate-700 mb-2">Plantilla PDF</label>
-                <select name="plantilla_pdf_id" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">Usar la de la cohorte</option>
-                    @foreach($plantillas as $plantilla)
-                        <option value="{{ $plantilla->id }}" {{ old('plantilla_pdf_id', $certificado->plantilla_pdf_id) == $plantilla->id ? 'selected' : '' }}>
-                            {{ $plantilla->nombre }} ({{ ucfirst($plantilla->orientacion) }})
+                <label class="block text-sm font-medium text-slate-700 mb-2">Planilla</label>
+                <select name="planilla_id" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Sin planilla</option>
+                    @foreach($planillas as $planilla)
+                        <option value="{{ $planilla->id }}" {{ old('planilla_id', $certificado->planilla_id) == $planilla->id ? 'selected' : '' }}>
+                            {{ $planilla->nombre }}
                         </option>
                     @endforeach
                 </select>
-                <p class="text-xs text-slate-500 mt-1">Si no seleccionas una, se usara la plantilla asignada a la cohorte.</p>
-                @error('plantilla_pdf_id')
+                <p class="text-xs text-slate-500 mt-1">La planilla define la estructura base y los fondos del certificado.</p>
+                @error('planilla_id')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror
             </div>
